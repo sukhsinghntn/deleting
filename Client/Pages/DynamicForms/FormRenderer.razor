@@ -9,14 +9,15 @@
 @inject NavigationManager Navigation
 @inject CookieHelper CookieHelper
 
-<h3>@(form?.Name ?? "Loading…")</h3>
+<h3>@(!string.IsNullOrEmpty(statusMessage)
+        ? "Form Not Available"
+        : form?.Name ?? "Loading…")</h3>
 <p class="text-muted">@form?.Description</p>
-@if (!string.IsNullOrEmpty(deletedMessage))
+@if (!string.IsNullOrEmpty(statusMessage))
 {
-    <div class="alert alert-warning">@deletedMessage</div>
+    <div class="alert alert-warning">@statusMessage</div>
 }
-
-@if (form == null)
+else if (form == null)
 {
     <p><em>Loading form…</em></p>
 }
@@ -174,7 +175,7 @@ else
 
     private Form form;
     private Dictionary<string, object> responseData = new();
-    private string? deletedMessage;
+    private string? statusMessage;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -186,11 +187,11 @@ else
                 if (resp.StatusCode == HttpStatusCode.Gone)
                 {
                     var info = await resp.Content.ReadFromJsonAsync<DeletedFormInfo>();
-                    deletedMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
+                    statusMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
                 }
                 else
                 {
-                    deletedMessage = "Form not found.";
+                    statusMessage = "Form not found.";
                 }
                 StateHasChanged();
                 return;

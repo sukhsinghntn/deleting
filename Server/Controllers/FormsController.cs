@@ -60,13 +60,7 @@ namespace DynamicFormsApp.Server.Controllers
             var form = await _svc.GetFormAsync(id);
             if (!form.IsActive)
             {
-                var owner = await _userSvc.GetUserData(form.CreatedBy);
-                return StatusCode(410, new
-                {
-                    Message = "This form has been deleted. Please contact the owner.",
-                    Owner = owner?.DisplayName ?? form.CreatedBy,
-                    Email = owner?.Email
-                });
+                return await FormUnavailable(form);
             }
 
             var rows = await _svc.GetResponsesAsync(id, user);
@@ -84,13 +78,7 @@ namespace DynamicFormsApp.Server.Controllers
             var form = await _svc.GetFormAsync(id);
             if (!form.IsActive)
             {
-                var owner = await _userSvc.GetUserData(form.CreatedBy);
-                return StatusCode(410, new
-                {
-                    Message = "This form has been deleted. Please contact the owner.",
-                    Owner = owner?.DisplayName ?? form.CreatedBy,
-                    Email = owner?.Email
-                });
+                return await FormUnavailable(form);
             }
 
             var row = await _svc.GetResponseAsync(id, responseId, user);
@@ -105,13 +93,7 @@ namespace DynamicFormsApp.Server.Controllers
             var form = await _svc.GetFormAsync(id);
             if (!form.IsActive)
             {
-                var owner = await _userSvc.GetUserData(form.CreatedBy);
-                return StatusCode(410, new
-                {
-                    Message = "This form has been deleted. Please contact the owner.",
-                    Owner = owner?.DisplayName ?? form.CreatedBy,
-                    Email = owner?.Email
-                });
+                return await FormUnavailable(form);
             }
             return Ok(form);
         }
@@ -122,13 +104,7 @@ namespace DynamicFormsApp.Server.Controllers
             var current = await _svc.GetFormAsync(id);
             if (!current.IsActive)
             {
-                var owner = await _userSvc.GetUserData(current.CreatedBy);
-                return StatusCode(410, new
-                {
-                    Message = "This form has been deleted. Please contact the owner.",
-                    Owner = owner?.DisplayName ?? current.CreatedBy,
-                    Email = owner?.Email
-                });
+                return await FormUnavailable(current);
             }
             var history = await _svc.GetFormHistoryAsync(id);
             return Ok(history);
@@ -201,7 +177,31 @@ namespace DynamicFormsApp.Server.Controllers
                 return Unauthorized();
             }
 
+            await _svc.DeleteFormAsync(id, user);
+            return NoContent();
+        }
+
+        [HttpPost("{id}/deactivate")]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            if (!Request.Cookies.TryGetValue("userName", out var user) || string.IsNullOrEmpty(user))
+            {
+                return Unauthorized();
+            }
+
             await _svc.DeactivateFormAsync(id, user);
+            return NoContent();
+        }
+
+        [HttpPost("{id}/activate")]
+        public async Task<IActionResult> Activate(int id)
+        {
+            if (!Request.Cookies.TryGetValue("userName", out var user) || string.IsNullOrEmpty(user))
+            {
+                return Unauthorized();
+            }
+
+            await _svc.ActivateFormAsync(id, user);
             return NoContent();
         }
 
@@ -252,13 +252,7 @@ namespace DynamicFormsApp.Server.Controllers
                 var form = await _svc.GetFormAsync(id);
                 if (!form.IsActive)
                 {
-                    var owner = await _userSvc.GetUserData(form.CreatedBy);
-                    return StatusCode(410, new
-                    {
-                        Message = "This form has been deleted. Please contact the owner.",
-                        Owner = owner?.DisplayName ?? form.CreatedBy,
-                        Email = owner?.Email
-                    });
+                    return await FormUnavailable(form);
                 }
                 if (form.RequireLogin && Request.Cookies.TryGetValue("userName", out var userId) && !string.IsNullOrEmpty(userId))
                 {
@@ -297,6 +291,21 @@ namespace DynamicFormsApp.Server.Controllers
                     Details = ex.ToString()
                 });
             }
+        }
+
+        private async Task<ObjectResult> FormUnavailable(Form form)
+        {
+            Response.Headers["Cache-Control"] = "no-store";
+            var owner = await _userSvc.GetUserData(form.CreatedBy);
+            var message = form.IsDeleted
+                ? "This form has been deleted. Please contact the owner."
+                : "This form is currently unpublished. Please contact the owner.";
+            return StatusCode(410, new
+            {
+                Message = message,
+                Owner = owner?.DisplayName ?? form.CreatedBy,
+                Email = owner?.Email
+            });
         }
     }
 }
