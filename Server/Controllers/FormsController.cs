@@ -58,7 +58,7 @@ namespace DynamicFormsApp.Server.Controllers
                 return Unauthorized();
             }
             var form = await _svc.GetFormAsync(id);
-            if (!form.IsActive)
+            if (!form.IsActive && form.CreatedBy != user)
             {
                 return await FormUnavailable(form);
             }
@@ -76,7 +76,7 @@ namespace DynamicFormsApp.Server.Controllers
             }
 
             var form = await _svc.GetFormAsync(id);
-            if (!form.IsActive)
+            if (!form.IsActive && form.CreatedBy != user)
             {
                 return await FormUnavailable(form);
             }
@@ -90,8 +90,9 @@ namespace DynamicFormsApp.Server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Form>> Get(int id)
         {
+            var loggedIn = Request.Cookies.TryGetValue("userName", out var user) && !string.IsNullOrEmpty(user);
             var form = await _svc.GetFormAsync(id);
-            if (!form.IsActive)
+            if (!form.IsActive && (!loggedIn || form.CreatedBy != user))
             {
                 return await FormUnavailable(form);
             }
@@ -101,8 +102,9 @@ namespace DynamicFormsApp.Server.Controllers
         [HttpGet("{id}/history")]
         public async Task<ActionResult<IEnumerable<Form>>> History(int id)
         {
+            var loggedIn = Request.Cookies.TryGetValue("userName", out var user) && !string.IsNullOrEmpty(user);
             var current = await _svc.GetFormAsync(id);
-            if (!current.IsActive)
+            if (!current.IsActive && (!loggedIn || current.CreatedBy != user))
             {
                 return await FormUnavailable(current);
             }

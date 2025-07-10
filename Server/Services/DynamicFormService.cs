@@ -452,7 +452,7 @@ namespace DynamicFormsApp.Server.Services
 
             var form = await _db.Forms.FindAsync(formId)
                        ?? throw new InvalidOperationException("Form not found");
-            if (!form.IsActive)
+            if (!form.IsActive && form.CreatedBy != user)
             {
                 throw new InvalidOperationException("Form inactive");
             }
@@ -493,7 +493,7 @@ namespace DynamicFormsApp.Server.Services
 
             var form = await _db.Forms.FindAsync(formId)
                        ?? throw new InvalidOperationException("Form not found");
-            if (!form.IsActive)
+            if (!form.IsActive && form.CreatedBy != user)
             {
                 throw new InvalidOperationException("Form inactive");
             }
