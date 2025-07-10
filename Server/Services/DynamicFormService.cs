@@ -275,6 +275,18 @@ namespace DynamicFormsApp.Server.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task ActivateFormAsync(int formId, string user)
+        {
+            var form = await _db.Forms.FirstOrDefaultAsync(f => f.Id == formId && f.CreatedBy == user);
+            if (form == null)
+            {
+                throw new InvalidOperationException("Form not found");
+            }
+
+            form.IsActive = true;
+            await _db.SaveChangesAsync();
+        }
+
         public async Task<List<Form>> GetAllFormsAsync()
         {
             return await _db.Forms
@@ -306,7 +318,7 @@ namespace DynamicFormsApp.Server.Services
         {
             var query = _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => f.CreatedBy == user && f.IsActive);
+                .Where(f => f.CreatedBy == user);
 
             if (!includeDrafts)
             {

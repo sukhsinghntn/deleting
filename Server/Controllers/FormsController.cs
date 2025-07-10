@@ -205,6 +205,18 @@ namespace DynamicFormsApp.Server.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id}/publish")]
+        public async Task<IActionResult> Publish(int id)
+        {
+            if (!Request.Cookies.TryGetValue("userName", out var user) || string.IsNullOrEmpty(user))
+            {
+                return Unauthorized();
+            }
+
+            await _svc.ActivateFormAsync(id, user);
+            return NoContent();
+        }
+
         [HttpPost("{id}/share")]
         public async Task<IActionResult> Share(int id, [FromBody] ShareFormDto dto)
         {

@@ -32,7 +32,13 @@ else
                 @foreach (var f in forms)
                 {
                     <tr>
-                        <td>@f.Name</td>
+                        <td>
+                            @f.Name
+                            @if (!f.IsActive)
+                            {
+                                <span class="badge bg-secondary ms-2">Inactive</span>
+                            }
+                        </td>
                         <td>@f.Description</td>
                         <td>
                             <a class="btn btn-sm btn-primary me-2" href="@($"/forms/{f.Id}")">Open</a>
@@ -44,7 +50,14 @@ else
                             {
                                 <a class="btn btn-sm btn-outline-secondary me-2" href="@($"/forms/{f.Id}/history")">History</a>
                             }
-                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteForm(f.Id)">Delete</button>
+                            @if (f.IsActive)
+                            {
+                                <button class="btn btn-sm btn-danger" @onclick="() => UnpublishForm(f.Id)">Unpublish</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-success" @onclick="() => PublishForm(f.Id)">Publish</button>
+                            }
                         </td>
                     </tr>
                 }
@@ -73,7 +86,7 @@ else
         }
     }
 
-    private async Task DeleteForm(int id)
+    private async Task UnpublishForm(int id)
     {
         var item = forms?.FirstOrDefault(f => f.Id == id);
         if (item == null)
@@ -82,8 +95,8 @@ else
         }
 
         bool? confirmed = await DialogService.Confirm(
-            "Are you sure you want to delete this form?",
-            "Delete Form",
+            "Unpublish this form?",
+            "Unpublish Form",
             new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
 
         if (confirmed != true)
@@ -92,12 +105,36 @@ else
         }
 
         await Http.DeleteAsync($"api/forms/{id}");
-
-        forms!.Remove(item);
+        item.IsActive = false;
         NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
-                Summary = "Form Deleted",
+                Summary = "Form Unpublished",
+                Detail = item.Name
+            });
+        StateHasChanged();
+    }
+
+    private async Task PublishForm(int id)
+    {
+        var item = forms?.FirstOrDefault(f => f.Id == id);
+        if (item == null)
+            return;
+
+        bool? confirmed = await DialogService.Confirm(
+            "Publish this form?",
+            "Publish Form",
+            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirmed != true)
+            return;
+
+        await Http.PostAsync($"api/forms/{id}/publish", null);
+        item.IsActive = true;
+        NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Form Published",
                 Detail = item.Name
             });
         StateHasChanged();
