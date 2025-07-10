@@ -61,6 +61,7 @@ namespace DynamicFormsApp.Server.Controllers
             if (!form.IsActive)
             {
                 var owner = await _userSvc.GetUserData(form.CreatedBy);
+                Response.Headers["Cache-Control"] = "no-store";
                 return StatusCode(410, new
                 {
                     Message = "This form has been deleted. Please contact the owner.",
@@ -85,6 +86,7 @@ namespace DynamicFormsApp.Server.Controllers
             if (!form.IsActive)
             {
                 var owner = await _userSvc.GetUserData(form.CreatedBy);
+                Response.Headers["Cache-Control"] = "no-store";
                 return StatusCode(410, new
                 {
                     Message = "This form has been deleted. Please contact the owner.",
@@ -100,12 +102,14 @@ namespace DynamicFormsApp.Server.Controllers
 
         // GET /api/forms/{id}
         [HttpGet("{id}")]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<ActionResult<Form>> Get(int id)
         {
             var form = await _svc.GetFormAsync(id);
             if (!form.IsActive)
             {
                 var owner = await _userSvc.GetUserData(form.CreatedBy);
+                Response.Headers["Cache-Control"] = "no-store";
                 return StatusCode(410, new
                 {
                     Message = "This form has been deleted. Please contact the owner.",
@@ -117,12 +121,14 @@ namespace DynamicFormsApp.Server.Controllers
         }
 
         [HttpGet("{id}/history")]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<ActionResult<IEnumerable<Form>>> History(int id)
         {
             var current = await _svc.GetFormAsync(id);
             if (!current.IsActive)
             {
                 var owner = await _userSvc.GetUserData(current.CreatedBy);
+                Response.Headers["Cache-Control"] = "no-store";
                 return StatusCode(410, new
                 {
                     Message = "This form has been deleted. Please contact the owner.",
@@ -277,6 +283,7 @@ namespace DynamicFormsApp.Server.Controllers
                 if (!form.IsActive)
                 {
                     var owner = await _userSvc.GetUserData(form.CreatedBy);
+                    Response.Headers["Cache-Control"] = "no-store";
                     return StatusCode(410, new
                     {
                         Message = "This form has been deleted. Please contact the owner.",

@@ -89,7 +89,7 @@ else
                 return;
             }
 
-            var respForm = await Http.GetAsync($"api/forms/{FormId}");
+            var respForm = await Http.GetAsync($"api/forms/{FormId}?t={DateTime.UtcNow.Ticks}");
             if (!respForm.IsSuccessStatusCode)
             {
                 if (respForm.StatusCode == HttpStatusCode.Gone)
@@ -106,7 +106,7 @@ else
             }
 
             form = await respForm.Content.ReadFromJsonAsync<Form>();
-            var resp = await Http.GetAsync($"api/forms/{FormId}/responses");
+            var resp = await Http.GetAsync($"api/forms/{FormId}/responses?t={DateTime.UtcNow.Ticks}");
             if (!resp.IsSuccessStatusCode)
             {
                 deletedMessage = "Unable to load responses.";

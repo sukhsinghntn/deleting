@@ -151,7 +151,7 @@ else
             currentUser = await UserService.GetUserData(user);
             notificationEmail = currentUser?.Email ?? string.Empty;
 
-            var resp = await Http.GetAsync($"api/forms/{FormId}");
+            var resp = await Http.GetAsync($"api/forms/{FormId}?t={DateTime.UtcNow.Ticks}");
             if (!resp.IsSuccessStatusCode)
             {
                 if (resp.StatusCode == HttpStatusCode.Gone)

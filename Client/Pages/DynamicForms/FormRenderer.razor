@@ -177,27 +177,33 @@ else
     private Dictionary<string, object> responseData = new();
     private string? deletedMessage;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnParametersSetAsync()
     {
-        if (firstRender)
-        {
-            var resp = await Http.GetAsync($"api/forms/{FormId}");
-            if (!resp.IsSuccessStatusCode)
-            {
-                if (resp.StatusCode == HttpStatusCode.Gone)
-                {
-                    var info = await resp.Content.ReadFromJsonAsync<DeletedFormInfo>();
-                    deletedMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
-                }
-                else
-                {
-                    deletedMessage = "Form not found.";
-                }
-                StateHasChanged();
-                return;
-            }
+        await LoadForm();
+    }
 
-            form = await resp.Content.ReadFromJsonAsync<Form>();
+    private async Task LoadForm()
+    {
+        deletedMessage = null;
+        var resp = await Http.GetAsync($"api/forms/{FormId}?t={DateTime.UtcNow.Ticks}");
+        if (!resp.IsSuccessStatusCode)
+        {
+            if (resp.StatusCode == HttpStatusCode.Gone)
+            {
+                var info = await resp.Content.ReadFromJsonAsync<DeletedFormInfo>();
+                deletedMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
+            }
+            else
+            {
+                deletedMessage = "Form not found.";
+            }
+            form = null;
+            responseData.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        form = await resp.Content.ReadFromJsonAsync<Form>();
 
             var user = await CookieHelper.LoginStatus();
             if (form.RequireLogin && string.IsNullOrEmpty(user))
