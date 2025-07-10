@@ -1,0 +1,80 @@
+@page "/sharedforms"
+@using System.Net.Http.Json
+@using DynamicFormsApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+
+<h3 class="mb-3">Forms Shared With Me</h3>
+
+@if (forms == null)
+{
+    <p>Loading...</p>
+}
+else if (!forms.Any())
+{
+    <p>No forms have been shared with you.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in forms)
+                {
+                    <tr>
+                        <td>@f.Name</td>
+                        <td>@f.Description</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary me-2" href="@($"/forms/{f.Id}/responses")">Responses</a>
+                            <a class="btn btn-sm btn-info me-2" href="@($"/forms/{f.Id}/summary")">Summary</a>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => LeaveForm(f.Id)">Leave</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Form>? forms;
+    private string? userName;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            if (string.IsNullOrEmpty(user))
+            {
+                var ret = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+                Navigation.NavigateTo($"login?returnUrl={ret}", true);
+                return;
+            }
+
+            userName = user;
+            forms = await Http.GetFromJsonAsync<List<Form>>("api/forms/shared");
+            StateHasChanged();
+        }
+    }
+
+    private async Task LeaveForm(int id)
+    {
+        if (string.IsNullOrEmpty(userName)) return;
+        await Http.DeleteAsync($"api/forms/{id}/shares/{userName}");
+        var item = forms?.FirstOrDefault(f => f.Id == id);
+        if (item != null)
+        {
+            forms!.Remove(item);
+            StateHasChanged();
+        }
+    }
+}

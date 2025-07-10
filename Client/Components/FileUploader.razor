@@ -1,0 +1,34 @@
+﻿@inject HttpClient Http
+@using Microsoft.AspNetCore.Components.Forms
+
+<InputFile OnChange="HandleFileSelected" />
+
+@code {
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null)
+            return;
+
+        var content = new MultipartFormDataContent();
+        var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)); // 10 MB limit
+        content.Add(streamContent, "file", file.Name);
+
+        var response = await Http.PostAsync("api/FileUpload", content);
+        if (response.IsSuccessStatusCode)
+        {
+            var result = await response.Content.ReadFromJsonAsync<UploadResult>();
+            Console.WriteLine($"File uploaded to: {result.filePath}");
+            // You can now use result.filePath to display or process the uploaded file
+        }
+        else
+        {
+            Console.WriteLine("File upload failed.");
+        }
+    }
+
+    private class UploadResult
+    {
+        public string filePath { get; set; }
+    }
+}

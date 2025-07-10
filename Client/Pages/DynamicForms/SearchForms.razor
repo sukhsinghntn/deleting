@@ -1,0 +1,67 @@
+@page "/forms/search"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+
+<h3 class="mb-3">Search Forms</h3>
+
+<input class="form-control mb-3" placeholder="Search..." @bind="searchTerm" />
+
+@if (forms == null)
+{
+    <p>Loading...</p>
+}
+else if (!FilteredForms.Any())
+{
+    <p>No matching forms.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in FilteredForms)
+                {
+                    <tr>
+                        <td>@f.Name</td>
+                        <td>@f.Description</td>
+                        <td>
+                            <a class="btn btn-sm btn-primary" href="@($"/forms/{f.Id}")">Open</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Form>? forms;
+    private string searchTerm = string.Empty;
+
+    private IEnumerable<Form> FilteredForms => string.IsNullOrWhiteSpace(searchTerm)
+        ? forms ?? Enumerable.Empty<Form>()
+        : forms?.Where(f =>
+            (f.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (f.Description?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+            ?? Enumerable.Empty<Form>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            bool includePrivate = !string.IsNullOrEmpty(user);
+            forms = await Http.GetFromJsonAsync<List<Form>>($"api/forms/search?includePrivate={includePrivate}");
+            StateHasChanged();
+        }
+    }
+}

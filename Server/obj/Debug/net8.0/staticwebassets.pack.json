@@ -1,0 +1,101 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\css\\app.css",
+      "PackagePath": "staticwebassets\\css\\app.css"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\css\\form-builder.css",
+      "PackagePath": "staticwebassets\\css\\form-builder.css"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\icon-512.png",
+      "PackagePath": "staticwebassets\\icon-512.png"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\images\\NDA_TRANS_WHITE.png",
+      "PackagePath": "staticwebassets\\images\\NDA_TRANS_WHITE.png"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\images\\login.jpg",
+      "PackagePath": "staticwebassets\\images\\login.jpg"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\images\\logo-login.png",
+      "PackagePath": "staticwebassets\\images\\logo-login.png"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\images\\logo.ico",
+      "PackagePath": "staticwebassets\\images\\logo.ico"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\images\\logo.png",
+      "PackagePath": "staticwebassets\\images\\logo.png"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\js\\chartInterop.js",
+      "PackagePath": "staticwebassets\\js\\chartInterop.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\js\\cookieHelper.js",
+      "PackagePath": "staticwebassets\\js\\cookieHelper.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\js\\dragdrop-wrapper.js",
+      "PackagePath": "staticwebassets\\js\\dragdrop-wrapper.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\js\\exportHelper.js",
+      "PackagePath": "staticwebassets\\js\\exportHelper.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\js\\sortable-wrapper.js",
+      "PackagePath": "staticwebassets\\js\\sortable-wrapper.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\manifest.json",
+      "PackagePath": "staticwebassets\\manifest.json"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\service-worker.js",
+      "PackagePath": "staticwebassets\\service-worker.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\service-worker.published.js",
+      "PackagePath": "staticwebassets\\service-worker.published.js"
+    },
+    {
+      "Id": "C:\\Users\\ssingh\\Desktop\\DynamicFormsApp\\V4\\Server\\wwwroot\\uploads\\937d0dde-76ee-4920-833d-7e5b1e7f21da_Tool_Crib_Admin_Website_Overview.pdf",
+      "PackagePath": "staticwebassets\\uploads\\937d0dde-76ee-4920-833d-7e5b1e7f21da_Tool_Crib_Admin_Website_Overview.pdf"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.DynamicFormsApp.Server.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.DynamicFormsApp.Server.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.DynamicFormsApp.Server.props",
+      "PackagePath": "build\\DynamicFormsApp.Server.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.DynamicFormsApp.Server.props",
+      "PackagePath": "buildMultiTargeting\\DynamicFormsApp.Server.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.DynamicFormsApp.Server.props",
+      "PackagePath": "buildTransitive\\DynamicFormsApp.Server.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

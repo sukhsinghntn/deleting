@@ -1,0 +1,2 @@
+C:\Users\ssingh\Desktop\DynamicFormsApp\DynamicFormsApp\bug-login\Client\obj\Release\net8.0\staticwebassets.build.json
+C:\Users\ssingh\Desktop\DynamicFormsApp\DynamicFormsApp\bug-login\Client\obj\Release\net8.0\staticwebassets.build.json

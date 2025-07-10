@@ -1,0 +1,201 @@
+@page "/forms/{FormId:int}/responses"
+@using System.Net.Http.Json
+@using System.Net
+@using DynamicFormsApp.Shared.Models
+@using Microsoft.AspNetCore.Components
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="container mt-4">
+    <h2 class="mb-4">📄 Responses: <span class="text-primary">@form?.Name</span></h2>
+    <p class="text-muted">@form?.Description</p>
+    @if (!string.IsNullOrEmpty(deletedMessage))
+    {
+        <div class="alert alert-warning">@deletedMessage</div>
+    }
+
+    @if (form == null || responses == null)
+    {
+        <div class="alert alert-info">Loading responses...</div>
+    }
+    else if (!responses.Any())
+    {
+        <div class="alert alert-warning">No responses yet.</div>
+    }
+    else
+    {
+        <div class="mb-3">
+            <button class="btn btn-outline-info me-2" @onclick="DownloadCsv">Download CSV</button>
+            <button class="btn btn-outline-info" @onclick="DownloadPdf">Download PDF</button>
+        </div>
+        <div class="table-responsive">
+            <table id="responsesTable" class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        @foreach (var col in columns)
+                        {
+                            <th scope="col">@(col == "ResponderName" ? "Submitted By" : col)</th>
+                        }
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in responses)
+                    {
+                        <tr>
+                            @foreach (var col in columns)
+                            {
+                                <td>
+                                    @if (col != "ResponseId" && col != "CreatedAt" && IsFileField(col))
+                                    {
+                                        var url = row[col]?.ToString();
+                                        if (!string.IsNullOrWhiteSpace(url))
+                                        {
+                                            if (url.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <iframe src="@($"/" + url)" width="100%" height="200px" style="border: none;"></iframe>
+                                            }
+                                            else if (IsImage(url))
+                                            {
+                                                <img src="@($"/" + url)" class="img-thumbnail" style="max-height: 120px;" />
+                                            }
+                                            else
+                                            {
+                                                <a class="btn btn-sm btn-outline-primary" href="@($"/" + url)" target="_blank">Open File</a>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No file</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div style="white-space: pre-wrap;">@row[col]</div>
+                                    }
+                                </td>
+                            }
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary" href="@($"/forms/{FormId}/responses/{row["ResponseId"]}")">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int FormId { get; set; }
+
+    private Form form;
+    private List<Dictionary<string, object>> responses;
+    private string[] columns = Array.Empty<string>();
+    private IJSObjectReference? exportModule;
+    private string? deletedMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            if (string.IsNullOrEmpty(user))
+            {
+                var ret = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+                Navigation.NavigateTo($"login?returnUrl={ret}", true);
+                return;
+            }
+
+
+            var respForm = await Http.GetAsync($"api/forms/{FormId}");
+            if (!respForm.IsSuccessStatusCode)
+            {
+                if (respForm.StatusCode == HttpStatusCode.Gone)
+                {
+                    var info = await respForm.Content.ReadFromJsonAsync<DeletedFormInfo>();
+                    deletedMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
+                }
+                else
+                {
+                    deletedMessage = "Form not found.";
+                }
+                StateHasChanged();
+                return;
+            }
+
+            form = await respForm.Content.ReadFromJsonAsync<Form>();
+            var respData = await Http.GetAsync($"api/forms/{FormId}/responses");
+            if (!respData.IsSuccessStatusCode)
+            {
+                deletedMessage = "Unable to load responses.";
+                StateHasChanged();
+                return;
+            }
+            responses = await respData.Content.ReadFromJsonAsync<List<Dictionary<string, object>>>();
+
+            var fieldKeys = form.Fields.Select(f => f.Key);
+            columns = new[] { "ResponseId", "CreatedAt" }
+                .Concat(fieldKeys)
+                .ToArray();
+            if (form.RequireLogin)
+            {
+                columns = columns
+                    .Concat(new[] { "ResponderName" })
+                    .ToArray();
+            }
+
+            exportModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/exportHelper.js");
+            StateHasChanged();
+        }
+    }
+
+    private bool IsFileField(string key)
+    {
+        var field = form?.Fields.FirstOrDefault(f => f.Key == key);
+        return field?.FieldType == "file";
+    }
+
+    private bool IsImage(string path)
+    {
+        var lower = path.ToLowerInvariant();
+        return lower.EndsWith(".jpg") || lower.EndsWith(".jpeg") ||
+               lower.EndsWith(".png") || lower.EndsWith(".gif") ||
+               lower.EndsWith(".bmp") || lower.EndsWith(".webp");
+    }
+
+    private async Task DownloadCsv()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("downloadTableCsv", "responsesTable", $"{form?.Name ?? "responses"}.csv");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("downloadTableCsv", "responsesTable", $"{form?.Name ?? "responses"}.csv");
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("exportTableToPdf", "responsesTable", $"{form?.Name ?? "responses"}.pdf");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("exportTableToPdf", "responsesTable", $"{form?.Name ?? "responses"}.pdf");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.DisposeAsync();
+        }
+    }
+}

@@ -1,0 +1,84 @@
+@page "/draftforms"
+@using System.Net.Http.Json
+@using DynamicFormsApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+
+<h3 class="mb-3">My Drafts</h3>
+
+@if (drafts == null)
+{
+    <p>Loading...</p>
+}
+else if (!drafts.Any())
+{
+    <p>You have no drafts.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var f in drafts)
+                {
+                    <tr>
+                        <td>@f.Name</td>
+                        <td>@f.Description</td>
+                        <td>
+                            <a class="btn btn-sm btn-secondary me-2" href="@($"/forms/{f.Id}/edit")">Edit</a>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteDraft(f.Id)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Form>? drafts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            if (string.IsNullOrEmpty(user))
+            {
+                var ret = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+                Navigation.NavigateTo($"login?returnUrl={ret}", true);
+                return;
+            }
+
+            drafts = await Http.GetFromJsonAsync<List<Form>>("api/forms/drafts");
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteDraft(int id)
+    {
+        var item = drafts?.FirstOrDefault(f => f.Id == id);
+        if (item == null)
+            return;
+
+        bool? confirmed = await DialogService.Confirm(
+            "Delete this draft?",
+            "Delete Draft",
+            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirmed != true)
+            return;
+
+        await Http.DeleteAsync($"api/forms/{id}");
+        drafts!.Remove(item);
+        StateHasChanged();
+    }
+}

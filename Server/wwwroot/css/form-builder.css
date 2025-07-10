@@ -1,0 +1,111 @@
+﻿/* 📦 Toolbox items */
+.draggable-field {
+    cursor: grab;
+    border: 1px dashed #ced4da;
+    background-color: #f8f9fa;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 calc(50% - 0.5rem);
+}
+
+    .draggable-field:active {
+        cursor: grabbing;
+        background-color: #e2e6ea;
+    }
+
+    .draggable-field:hover {
+        background-color: #e9ecef;
+    }
+
+/* 📋 Form canvas drop zone */
+#canvas {
+    min-height: 300px;
+    background-color: #fdfdfd;
+    border: 2px dashed #ccc;
+    padding: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+    #canvas.sortable-ghost {
+        background-color: #f0f8ff;
+    }
+
+/* ✋ Drag handle */
+.drag-handle {
+    cursor: grab;
+}
+
+    .drag-handle:active {
+        cursor: grabbing;
+    }
+/* ➕ Row drop zones */
+.row-dropzone {
+    height: 20px;
+    border-top: 2px dashed #dee2e6;
+    margin: 1rem 0;
+    position: relative;
+}
+.row-dropzone::after {
+    content: "Drop to add row";
+    position: absolute;
+    top: -0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 0 4px;
+}
+
+/* 🧩 Column drop area */
+.designer-row {
+    border: 2px dashed #dee2e6;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+.designer-row::before {
+    content: "Drop to add column";
+    position: absolute;
+    top: -0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 0 4px;
+}
+
+/* Dark mode overrides */
+body[data-bs-theme="dark"] {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+body[data-bs-theme="dark"] .draggable-field {
+    background-color: #343a40;
+    border-color: #495057;
+}
+body[data-bs-theme="dark"] .draggable-field:hover {
+    background-color: #495057;
+}
+body[data-bs-theme="dark"] #canvas {
+    background-color: #343a40;
+    border-color: #495057;
+}
+body[data-bs-theme="dark"] .row-dropzone {
+    border-top-color: #495057;
+}
+body[data-bs-theme="dark"] .row-dropzone::after {
+    background: #343a40;
+    color: #adb5bd;
+}
+body[data-bs-theme="dark"] .designer-row {
+    border-color: #495057;
+}
+body[data-bs-theme="dark"] .designer-row::before {
+    background: #343a40;
+    color: #adb5bd;
+}

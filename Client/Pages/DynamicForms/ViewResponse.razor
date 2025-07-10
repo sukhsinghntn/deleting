@@ -1,0 +1,269 @@
+@page "/forms/{FormId:int}/responses/{ResponseId:int}"
+@using System.Net.Http.Json
+@using System.Net
+@using System.Text.Json
+@using DynamicFormsApp.Shared.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+        <h3 class="mb-0">Response for @form?.Name</h3>
+        @if (!string.IsNullOrEmpty(responderName))
+        {
+            <span class="text-muted">Submitted by @responderName</span>
+        }
+    </div>
+
+</div>
+@if (!string.IsNullOrEmpty(deletedMessage))
+{
+    <div class="alert alert-warning">@deletedMessage</div>
+}
+<p class="text-muted">@form?.Description</p>
+<div class="mb-3" role="group">
+    <button class="btn btn-outline-info me-2" @onclick="PrintResponse">Print</button>
+    <button class="btn btn-outline-info me-2" @onclick="DownloadPdf">Download PDF</button>
+    <button class="btn btn-outline-info me-2" @onclick="DownloadCsv">Download CSV</button>
+    <button class="btn btn-outline-info" @onclick="DownloadExcel">Download Excel</button>
+</div>
+
+@if (form == null || response == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div id="printArea">
+    @foreach (var rowGroup in form.Fields.OrderBy(f => f.Row ?? 0).ThenBy(f => f.Column ?? 0).GroupBy(f => f.Row ?? 0))
+    {
+        <div class="row g-3 mb-3">
+        @foreach (var fld in rowGroup)
+        {
+            <div class="col-12 col-md-@(12 / (rowGroup.Count() == 0 ? 1 : rowGroup.Count()))">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">@fld.Label</label>
+                    <div class="form-control-plaintext border rounded bg-light p-2">
+                        @DisplayValue(fld)
+                    </div>
+                </div>
+            </div>
+        }
+        </div>
+    }
+    </div>
+    <table id="exportTable" class="table d-none">
+        <thead>
+            <tr><th>Field</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var fld in form.Fields.OrderBy(f => f.Row ?? 0).ThenBy(f => f.Column ?? 0))
+        {
+            <tr>
+                <th>@fld.Label</th>
+                <td>@ValueAsString(fld)</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public int FormId { get; set; }
+    [Parameter] public int ResponseId { get; set; }
+
+    private Form? form;
+    private Dictionary<string, object>? response;
+    private string? responderName;
+    private IJSObjectReference? exportModule;
+    private string? deletedMessage;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            if (string.IsNullOrEmpty(user))
+            {
+                var ret = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+                Navigation.NavigateTo($"login?returnUrl={ret}", true);
+                return;
+            }
+
+
+            var respForm = await Http.GetAsync($"api/forms/{FormId}");
+            if (!respForm.IsSuccessStatusCode)
+            {
+                if (respForm.StatusCode == HttpStatusCode.Gone)
+                {
+                    var info = await respForm.Content.ReadFromJsonAsync<DeletedFormInfo>();
+                    deletedMessage = $"{info?.Message} Contact {info?.Owner} ({info?.Email}).";
+                }
+                else
+                {
+                    deletedMessage = "Form not found.";
+                }
+                StateHasChanged();
+                return;
+            }
+
+            form = await respForm.Content.ReadFromJsonAsync<Form>();
+
+            var resp = await Http.GetAsync($"api/forms/{FormId}/responses/{ResponseId}");
+            if (!resp.IsSuccessStatusCode)
+            {
+                deletedMessage = "Response not found.";
+                StateHasChanged();
+                return;
+            }
+            response = await resp.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+            if (response.TryGetValue("ResponderName", out var respName))
+            {
+                responderName = respName?.ToString();
+            }
+            exportModule = await JS.InvokeAsync<IJSObjectReference>("import", "/js/exportHelper.js");
+            StateHasChanged();
+        }
+    }
+
+    RenderFragment DisplayValue(FormField field) => builder =>
+    {
+        if (response == null) return;
+        response.TryGetValue(field.Key, out var valObj);
+        var val = valObj?.ToString() ?? string.Empty;
+        if (field.FieldType == "file")
+        {
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                builder.AddContent(0, "No file");
+                return;
+            }
+            if (val.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                builder.AddMarkupContent(1, $"<iframe src='/{val}' width='100%' height='200px' style='border:none;'></iframe>");
+            }
+            else if (IsImage(val))
+            {
+                builder.AddMarkupContent(2, $"<img src='/{val}' class='img-thumbnail' style='max-height:120px;' />");
+            }
+            else
+            {
+                builder.OpenElement(3, "a");
+                builder.AddAttribute(4, "href", $"/{val}");
+                builder.AddAttribute(5, "target", "_blank");
+                builder.AddContent(6, "Open File");
+                builder.CloseElement();
+            }
+        }
+        else if (field.FieldType == "checkbox")
+        {
+            if (!string.IsNullOrWhiteSpace(val))
+            {
+                try
+                {
+                    var list = JsonSerializer.Deserialize<List<string>>(val) ?? new();
+                    builder.AddContent(7, string.Join(", ", list));
+                }
+                catch
+                {
+                    builder.AddContent(8, val);
+                }
+            }
+        }
+        else
+        {
+            builder.AddContent(9, val);
+        }
+    };
+
+    bool IsImage(string path)
+    {
+        var lower = path.ToLowerInvariant();
+        return lower.EndsWith(".jpg") || lower.EndsWith(".jpeg") ||
+               lower.EndsWith(".png") || lower.EndsWith(".gif") ||
+               lower.EndsWith(".bmp") || lower.EndsWith(".webp");
+    }
+
+    string ValueAsString(FormField field)
+    {
+        if (response == null) return string.Empty;
+        response.TryGetValue(field.Key, out var valObj);
+        var val = valObj?.ToString() ?? string.Empty;
+        if (field.FieldType == "checkbox")
+        {
+            if (!string.IsNullOrWhiteSpace(val))
+            {
+                try
+                {
+                    var list = JsonSerializer.Deserialize<List<string>>(val) ?? new();
+                    return string.Join(", ", list);
+                }
+                catch
+                {
+                }
+            }
+            return val;
+        }
+        return val;
+    }
+
+    private async Task DownloadCsv()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("downloadTableCsv", "exportTable", $"{form?.Name ?? "response"}.csv");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("downloadTableCsv", "exportTable", $"{form?.Name ?? "response"}.csv");
+        }
+    }
+
+    private async Task DownloadPdf()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("exportTableToPdf", "printArea", $"{form?.Name ?? "response"}.pdf");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("exportTableToPdf", "printArea", $"{form?.Name ?? "response"}.pdf");
+        }
+    }
+
+    private async Task DownloadExcel()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("exportTableToExcel", "exportTable", $"{form?.Name ?? "response"}.xlsx");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("exportTableToExcel", "exportTable", $"{form?.Name ?? "response"}.xlsx");
+        }
+    }
+
+    private async Task PrintResponse()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.InvokeVoidAsync("printElement", "printArea");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("printElement", "printArea");
+        }
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        if (exportModule is not null)
+        {
+            await exportModule.DisposeAsync();
+        }
+    }
+}

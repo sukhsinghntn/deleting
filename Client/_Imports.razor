@@ -1,0 +1,26 @@
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.JSInterop
+@using Radzen
+@using Radzen.Blazor
+@using DynamicFormsApp
+@using DynamicFormsApp.Client
+@using DynamicFormsApp.Client.Pages
+@using DynamicFormsApp.Client.Layout
+@using DynamicFormsApp.Client.Services
+@using DynamicFormsApp.Shared.Models
+@using DynamicFormsApp.Shared.Services
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject ContextMenuService ContextMenuService
+@inject TooltipService TooltipService
+@inject NotificationService NotificationService
+@inject CookieHelper CookieHelper
+@inject IUserService UserService
+@inject IEmailService EmailService

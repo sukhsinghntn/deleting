@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "DynamicFormsApp.Client": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:60064;http://localhost:60065"
+    }
+  }
+}

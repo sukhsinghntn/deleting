@@ -1,0 +1,81 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject CookieHelper CookieHelper
+@inject HttpClient Http
+@using DynamicFormsApp.Shared.Models
+
+<div class="text-center my-5">
+    <h1 class="mb-3">Dynamic Forms</h1>
+    <p class="text-muted">Create, share and manage forms with ease</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-4 g-3 mb-5 justify-content-center">
+    <div class="col" style="max-width:200px;">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>@totalForms</h3>
+                <p class="text-muted mb-0">Total Forms</p>
+            </div>
+        </div>
+    </div>
+    <div class="col" style="max-width:200px;">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>@myForms</h3>
+                <p class="text-muted mb-0">My Forms</p>
+            </div>
+        </div>
+    </div>
+    <div class="col" style="max-width:200px;">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>@drafts</h3>
+                <p class="text-muted mb-0">Drafts</p>
+            </div>
+        </div>
+    </div>
+    <div class="col" style="max-width:200px;">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>@shared</h3>
+                <p class="text-muted mb-0">Shared With Me</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="/forms/new" class="btn btn-primary">Create Form</a>
+    <a href="/myforms" class="btn btn-secondary">My Forms</a>
+    <a href="/sharedforms" class="btn btn-secondary">Shared With Me</a>
+</div>
+
+@code {
+    private int totalForms;
+    private int myForms;
+    private int drafts;
+    private int shared;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var user = await CookieHelper.LoginStatus();
+            if (string.IsNullOrEmpty(user))
+            {
+                var ret = Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri));
+                Navigation.NavigateTo($"login?returnUrl={ret}", true);
+            }
+            else
+            {
+                totalForms = await Http.GetFromJsonAsync<int>("api/forms/count");
+                var mine = await Http.GetFromJsonAsync<List<Form>>("api/forms/mine");
+                myForms = mine?.Count(f => f.IsActive) ?? 0;
+                var draftsList = await Http.GetFromJsonAsync<List<Form>>("api/forms/drafts");
+                drafts = draftsList?.Count ?? 0;
+                var sharedList = await Http.GetFromJsonAsync<List<Form>>("api/forms/shared");
+                shared = sharedList?.Count ?? 0;
+                StateHasChanged();
+            }
+        }
+    }
+}
