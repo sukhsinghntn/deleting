@@ -9,14 +9,15 @@
 @inject NavigationManager Navigation
 @inject CookieHelper CookieHelper
 
-<h3>@(form?.Name ?? "Loading…")</h3>
+<h3>@(!string.IsNullOrEmpty(deletedMessage)
+        ? "Form Not Available"
+        : form?.Name ?? "Loading…")</h3>
 <p class="text-muted">@form?.Description</p>
 @if (!string.IsNullOrEmpty(deletedMessage))
 {
     <div class="alert alert-warning">@deletedMessage</div>
 }
-
-@if (form == null)
+else if (form == null)
 {
     <p><em>Loading form…</em></p>
 }
