@@ -275,6 +275,19 @@ namespace DynamicFormsApp.Server.Services
             await _db.SaveChangesAsync();
         }
 
+        public async Task DeleteFormAsync(int formId, string user)
+        {
+            var form = await _db.Forms.FirstOrDefaultAsync(f => f.Id == formId && f.CreatedBy == user);
+            if (form == null)
+            {
+                throw new InvalidOperationException("Form not found");
+            }
+
+            form.IsDeleted = true;
+            form.IsActive = false;
+            await _db.SaveChangesAsync();
+        }
+
         public async Task ActivateFormAsync(int formId, string user)
         {
             var form = await _db.Forms.FirstOrDefaultAsync(f => f.Id == formId && f.CreatedBy == user);
@@ -291,20 +304,20 @@ namespace DynamicFormsApp.Server.Services
         {
             return await _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => f.IsActive && !f.IsDraft)
+                .Where(f => f.IsActive && !f.IsDraft && !f.IsDeleted)
                 .ToListAsync();
         }
 
         public async Task<int> GetFormCountAsync()
         {
-            return await _db.Forms.CountAsync(f => f.IsActive && !f.IsDraft);
+            return await _db.Forms.CountAsync(f => f.IsActive && !f.IsDraft && !f.IsDeleted);
         }
 
         public async Task<List<Form>> SearchFormsAsync(bool includePrivate)
         {
             var query = _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => f.IsActive && !f.IsDraft);
+                .Where(f => f.IsActive && !f.IsDraft && !f.IsDeleted);
 
             if (!includePrivate)
             {
@@ -318,7 +331,7 @@ namespace DynamicFormsApp.Server.Services
         {
             var query = _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => f.CreatedBy == user);
+                .Where(f => f.CreatedBy == user && !f.IsDeleted);
 
             if (!includeDrafts)
             {
@@ -332,7 +345,7 @@ namespace DynamicFormsApp.Server.Services
         {
             return await _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => f.CreatedBy == user && f.IsDraft && f.IsActive)
+                .Where(f => f.CreatedBy == user && f.IsDraft && f.IsActive && !f.IsDeleted)
                 .ToListAsync();
         }
 
@@ -391,7 +404,7 @@ namespace DynamicFormsApp.Server.Services
             var formIds = await _db.FormShares.Where(s => s.UserName == user).Select(s => s.FormId).ToListAsync();
             return await _db.Forms
                 .Include(f => f.Fields)
-                .Where(f => formIds.Contains(f.Id) && f.IsActive)
+                .Where(f => formIds.Contains(f.Id) && f.IsActive && !f.IsDeleted)
                 .ToListAsync();
         }
 

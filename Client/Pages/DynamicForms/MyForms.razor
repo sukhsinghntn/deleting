@@ -116,7 +116,7 @@ else
         }
         else
         {
-            await Http.DeleteAsync($"api/forms/{form.Id}");
+            await Http.PostAsync($"api/forms/{form.Id}/deactivate", null);
         }
 
         form.IsActive = publish;

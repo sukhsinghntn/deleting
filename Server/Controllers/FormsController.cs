@@ -201,6 +201,18 @@ namespace DynamicFormsApp.Server.Controllers
                 return Unauthorized();
             }
 
+            await _svc.DeleteFormAsync(id, user);
+            return NoContent();
+        }
+
+        [HttpPost("{id}/deactivate")]
+        public async Task<IActionResult> Deactivate(int id)
+        {
+            if (!Request.Cookies.TryGetValue("userName", out var user) || string.IsNullOrEmpty(user))
+            {
+                return Unauthorized();
+            }
+
             await _svc.DeactivateFormAsync(id, user);
             return NoContent();
         }
