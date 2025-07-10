@@ -83,6 +83,14 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.EnsureCreated();
+
+    // Ensure IsDeleted and IsActive columns exist for legacy databases
+    var sql = @"
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'IsDeleted' AND Object_ID = OBJECT_ID(N'[dbo].[Forms]'))
+    ALTER TABLE [dbo].[Forms] ADD [IsDeleted] BIT NOT NULL CONSTRAINT DF_Forms_IsDeleted DEFAULT(0);
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Name = N'IsActive' AND Object_ID = OBJECT_ID(N'[dbo].[Forms]'))
+    ALTER TABLE [dbo].[Forms] ADD [IsActive] BIT NOT NULL CONSTRAINT DF_Forms_IsActive DEFAULT(1);";
+    db.Database.ExecuteSqlRaw(sql);
 }
 
 app.Run();
