@@ -15,7 +15,8 @@
 
             <!-- Column for user-related actions -->
             <RadzenColumn Size="10">
-                <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                <RadzenStack AlignItems="AlignItems.Center" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                    <Breadcrumbs />
                     @if (waitingforuserload)
                     {
                         @if (username is null)

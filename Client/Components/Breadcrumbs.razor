@@ -1,0 +1,57 @@
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@using Microsoft.AspNetCore.Components.Routing
+
+<RadzenBreadCrumb class="mb-0">
+    @foreach (var item in Items)
+    {
+        <RadzenBreadCrumbItem Text="@item.Text" Path="@item.Url" />
+    }
+</RadzenBreadCrumb>
+
+@code {
+    private List<BreadcrumbItem> Items = new();
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        BuildItems();
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        BuildItems();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void BuildItems()
+    {
+        Items.Clear();
+        var relative = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var segments = string.IsNullOrEmpty(relative) ? Array.Empty<string>() : relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        string path = string.Empty;
+        Items.Add(new BreadcrumbItem("Home", ""));
+        foreach (var segment in segments)
+        {
+            path = string.IsNullOrEmpty(path) ? segment : $"{path}/{segment}";
+            Items.Add(new BreadcrumbItem(ToTitle(segment), path));
+        }
+    }
+
+    private static string ToTitle(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+        value = value.Replace('-', ' ');
+        return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    private record BreadcrumbItem(string Text, string Url);
+}
