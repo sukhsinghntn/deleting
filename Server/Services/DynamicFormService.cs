@@ -502,6 +502,39 @@ namespace DynamicFormsApp.Server.Services
             return row;
         }
 
+        public async Task<List<int>> GetResponseIdsAsync(int formId, string user)
+        {
+            if (!await HasResponseAccessAsync(formId, user))
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            var form = await _db.Forms.FindAsync(formId)
+                       ?? throw new InvalidOperationException("Form not found");
+            if (!form.IsActive)
+            {
+                throw new InvalidOperationException("Form inactive");
+            }
+
+            var rawName = SanitizeKey(form.Name);
+            var tableName = $"Form_{formId}_{rawName}";
+
+            using var conn = _db.Database.GetDbConnection();
+            if (conn.State != System.Data.ConnectionState.Open)
+                await conn.OpenAsync();
+
+            using var cmd = conn.CreateCommand();
+            cmd.CommandText = $"SELECT ResponseId FROM [{tableName}] ORDER BY ResponseId;";
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            var ids = new List<int>();
+            while (await reader.ReadAsync())
+            {
+                ids.Add(reader.GetInt32(0));
+            }
+            return ids;
+        }
+
         private string MapToSqlType(string fieldType) => fieldType switch
         {
             "number" => "FLOAT",

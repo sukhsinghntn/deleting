@@ -97,6 +97,30 @@ namespace DynamicFormsApp.Server.Controllers
             return Ok(row);
         }
 
+        [HttpGet("{id}/responseIds")]
+        public async Task<ActionResult<List<int>>> GetResponseIds(int id)
+        {
+            if (!Request.Cookies.TryGetValue("userName", out var user) || string.IsNullOrEmpty(user))
+            {
+                return Unauthorized();
+            }
+
+            var form = await _svc.GetFormAsync(id);
+            if (!form.IsActive)
+            {
+                var owner = await _userSvc.GetUserData(form.CreatedBy);
+                return StatusCode(410, new
+                {
+                    Message = "This form has been deleted. Please contact the owner.",
+                    Owner = owner?.DisplayName ?? form.CreatedBy,
+                    Email = owner?.Email
+                });
+            }
+
+            var ids = await _svc.GetResponseIdsAsync(id, user);
+            return Ok(ids);
+        }
+
 
         // GET /api/forms/{id}
         [HttpGet("{id}")]

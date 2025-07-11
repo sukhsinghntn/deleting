@@ -17,7 +17,10 @@
             <span class="text-muted">Submitted by @responderName</span>
         }
     </div>
-
+    <div>
+        <button class="btn btn-sm btn-outline-primary me-2" @onclick="GoPrev" disabled="@(!HasPrev)">Prev</button>
+        <button class="btn btn-sm btn-outline-primary" @onclick="GoNext" disabled="@(!HasNext)">Next</button>
+    </div>
 </div>
 @if (!string.IsNullOrEmpty(deletedMessage))
 {
@@ -80,6 +83,10 @@ else
     private string? responderName;
     private IJSObjectReference? exportModule;
     private string? deletedMessage;
+    private List<int> responseIds = new();
+    private int currentIndex;
+    private bool HasPrev => currentIndex > 0;
+    private bool HasNext => currentIndex < responseIds.Count - 1;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -111,6 +118,14 @@ else
             }
 
             form = await respForm.Content.ReadFromJsonAsync<Form>();
+
+            var idsResp = await Http.GetAsync($"api/forms/{FormId}/responseIds");
+            if (idsResp.IsSuccessStatusCode)
+            {
+                responseIds = await idsResp.Content.ReadFromJsonAsync<List<int>>() ?? new();
+                responseIds.Sort();
+                currentIndex = responseIds.IndexOf(ResponseId);
+            }
 
             var resp = await Http.GetAsync($"api/forms/{FormId}/responses/{ResponseId}");
             if (!resp.IsSuccessStatusCode)
@@ -255,6 +270,24 @@ else
         else
         {
             await JS.InvokeVoidAsync("printElement", "printArea");
+        }
+    }
+
+    private void GoPrev()
+    {
+        if (HasPrev)
+        {
+            var prevId = responseIds[currentIndex - 1];
+            Navigation.NavigateTo($"/forms/{FormId}/responses/{prevId}");
+        }
+    }
+
+    private void GoNext()
+    {
+        if (HasNext)
+        {
+            var nextId = responseIds[currentIndex + 1];
+            Navigation.NavigateTo($"/forms/{FormId}/responses/{nextId}");
         }
     }
 
