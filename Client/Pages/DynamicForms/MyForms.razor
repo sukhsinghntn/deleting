@@ -25,6 +25,7 @@ else
                 <tr>
                     <th>Name</th>
                     <th>Description</th>
+                    <th>Publish</th>
                     <th></th>
                 </tr>
             </thead>
@@ -34,6 +35,11 @@ else
                     <tr>
                         <td>@f.Name</td>
                         <td>@f.Description</td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" checked="@f.IsActive" @onchange="(e) => TogglePublish(f, (bool)e.Value)" />
+                            </div>
+                        </td>
                         <td>
                             <a class="btn btn-sm btn-primary me-2" href="@($"/forms/{f.Id}")">Open</a>
                             <a class="btn btn-sm btn-secondary me-2" href="@($"/forms/{f.Id}/edit")">Edit</a>
@@ -92,14 +98,34 @@ else
         }
 
         await Http.DeleteAsync($"api/forms/{id}");
-
         forms!.Remove(item);
         NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Form Deleted",
-                Detail = item.Name
-            });
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = "Form Deleted",
+            Detail = item.Name
+        });
+        StateHasChanged();
+    }
+
+    private async Task TogglePublish(Form form, bool publish)
+    {
+        if (publish)
+        {
+            await Http.PostAsync($"api/forms/{form.Id}/activate", null);
+        }
+        else
+        {
+            await Http.PostAsync($"api/forms/{form.Id}/deactivate", null);
+        }
+
+        form.IsActive = publish;
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = publish ? "Form Published" : "Form Unpublished",
+            Detail = form.Name
+        });
         StateHasChanged();
     }
 

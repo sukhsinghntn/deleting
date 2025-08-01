@@ -1,0 +1,58 @@
+@using System.Globalization
+@inject NavigationManager Navigation
+
+<nav aria-label="breadcrumb" class="mb-2">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        @for (int i = 0; i < segments.Length; i++)
+        {
+            var path = string.Join('/', segments.Take(i + 1));
+            var text = FormatSegment(segments[i]);
+            if (i == segments.Length - 1)
+            {
+                <li class="breadcrumb-item active" aria-current="page">@text</li>
+            }
+            else
+            {
+                <li class="breadcrumb-item"><a href="/@path">@text</a></li>
+            }
+        }
+    </ol>
+</nav>
+
+@code {
+    private string[] segments = Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        BuildSegments();
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        BuildSegments();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void BuildSegments()
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        segments = relative.Split('/', StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private static string FormatSegment(string segment)
+    {
+        if (int.TryParse(segment, out _))
+        {
+            return segment;
+        }
+        var text = segment.Replace('-', ' ');
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(text);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}
