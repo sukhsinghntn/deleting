@@ -49,7 +49,7 @@ else
                 return;
             }
 
-            var resp = await Http.GetAsync($"api/forms/{FormId}/history");
+            var resp = await Http.GetAsync($"api/forms/{FormId}/history?t={DateTime.UtcNow.Ticks}");
             if (!resp.IsSuccessStatusCode)
             {
                 if (resp.StatusCode == HttpStatusCode.Gone)

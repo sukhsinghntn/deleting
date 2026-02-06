@@ -18,6 +18,7 @@ namespace DynamicFormsApp.Shared.Models
         public bool NotifyOnResponse { get; set; } = false;
         public string? NotificationEmail { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool IsDeleted { get; set; } = false;
         public bool IsDraft { get; set; } = false;
         public int Version { get; set; } = 1;
         public int? PreviousVersionId { get; set; }

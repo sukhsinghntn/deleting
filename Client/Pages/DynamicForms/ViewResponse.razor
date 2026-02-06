@@ -94,7 +94,7 @@ else
             }
 
 
-            var respForm = await Http.GetAsync($"api/forms/{FormId}");
+            var respForm = await Http.GetAsync($"api/forms/{FormId}?t={DateTime.UtcNow.Ticks}");
             if (!respForm.IsSuccessStatusCode)
             {
                 if (respForm.StatusCode == HttpStatusCode.Gone)
@@ -112,7 +112,7 @@ else
 
             form = await respForm.Content.ReadFromJsonAsync<Form>();
 
-            var resp = await Http.GetAsync($"api/forms/{FormId}/responses/{ResponseId}");
+            var resp = await Http.GetAsync($"api/forms/{FormId}/responses/{ResponseId}?t={DateTime.UtcNow.Ticks}");
             if (!resp.IsSuccessStatusCode)
             {
                 deletedMessage = "Response not found.";
